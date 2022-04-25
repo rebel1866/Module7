@@ -1,0 +1,10 @@
+HELP.md
+.idea
+*.iws
+*.iml
+*.ipr
+.mvn/
+mvnw.cmd
+mvnw
+**/target
+dao/src/main/resources/application.properties
