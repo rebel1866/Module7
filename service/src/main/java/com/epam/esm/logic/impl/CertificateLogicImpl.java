@@ -5,6 +5,7 @@ import com.epam.esm.dao.TagDao;
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.SearchCertificateRequest;
 import com.epam.esm.dto.UpdateCertificateRequest;
+import com.epam.esm.entity.QCertificate;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.dao.CertificateDao;
 import com.epam.esm.entity.Certificate;
@@ -12,6 +13,8 @@ import com.epam.esm.exception.LogicException;
 import com.epam.esm.logic.CertificateLogic;
 import com.epam.esm.validation.Validation;
 import com.google.common.base.CaseFormat;
+import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,10 +45,10 @@ public class CertificateLogicImpl implements CertificateLogic {
     @Override
     @Transactional
     public List<CertificateDto> findCertificates(SearchCertificateRequest request) {
-        Map<String, String> params = ObjectToMapConverter.convertToMap(request);
-        List<Certificate> certificates;
-        params.put("distinct", "true");
-        certificates = certificateDao.findCertificates(params);
+        QCertificate certificate = QCertificate.certificate;
+        Predicate customerHasBirthday = certificate.certificateName.eq("GALLON");
+
+        List<Certificate> certificates = (List<Certificate>) certificateDao.findAll(customerHasBirthday);
         return CertificateEntityToDtoConverter.convertList(certificates);
     }
 
@@ -53,8 +56,11 @@ public class CertificateLogicImpl implements CertificateLogic {
     @Transactional
     public CertificateDto findCertificateById(int id) {
         Validation.validateId(id);
-        Certificate certificate = certificateDao.findCertificateById(id);
-        return CertificateEntityToDtoConverter.convert(certificate);
+        Optional<Certificate> optionalCertificate = certificateDao.findById(id);
+        if (optionalCertificate.isEmpty()) {
+            throw new LogicException("WmessageCode2:" + id, "errorCode=1");
+        }
+        return CertificateEntityToDtoConverter.convert(optionalCertificate.get());
     }
 
     @Override
@@ -63,25 +69,26 @@ public class CertificateLogicImpl implements CertificateLogic {
         Certificate certificate = CertificateDtoToEntityConverter.convert(request);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN);
         LocalDateTime now = LocalDateTime.parse(formatter.format(LocalDateTime.now()));
-        certificate.setCreationDate(now);
+        certificate.setCreationDate(now);   // cascade persist
         certificate.setLastUpdateTime(now);
         List<Tag> newTags = getNewTagsToAdd(certificate.getTags());
-        List<Tag> oldWithId = certificate.getTags().stream().map(tag -> {
-            Map<String, String> map = new HashMap<>();
-            map.put("tag", tag.getTagName());
-            return tagDao.findTags(map).get(0);
-        }).collect(Collectors.toList());
+        List<Tag> oldWithId = certificate.getTags().stream().map(tag -> tagDao.findByTagName(tag.getTagName())).
+                collect(Collectors.toList());
         certificate.setTags(oldWithId);
-        List<Tag> newTagsWithId = newTags.stream().map(l -> tagDao.addTag(l)).collect(Collectors.toList());
+        List<Tag> newTagsWithId = newTags.stream().map(l -> tagDao.save(l)).collect(Collectors.toList());
         certificate.getTags().addAll(newTagsWithId);
-        Certificate addedCertificate = certificateDao.addCertificate(certificate);
+        Certificate addedCertificate = certificateDao.save(certificate);
         return CertificateEntityToDtoConverter.convert(addedCertificate);
     }
 
     @Override
     public void deleteCertificate(int id) {
         Validation.validateId(id);
-        certificateDao.deleteCertificate(id);
+        boolean isExists = certificateDao.existsById(id);
+        if (!isExists) {
+            throw new LogicException("WmessageCode2:" + id, "errorCode=1");
+        }
+        certificateDao.deleteById(id);
     }
 
     @Override
@@ -90,22 +97,52 @@ public class CertificateLogicImpl implements CertificateLogic {
         Validation.validateId(id);
         List<Tag> tags = TagDtoToEntityConverter.convertList(request.getTags());
         Certificate certificate = UpdateDtoToEntityConverter.convert(request);
-        Certificate updatedCertificate = certificateDao.updateCertificate(id, certificate);
-        if (tags.size() != 0) {
-            List<Tag> newTags = getNewTagsToAdd(tags);
-            List<Tag> oldWithId = tags.stream().map(tag -> {
-                Map<String, String> map = new HashMap<>();
-                map.put("tag", tag.getTagName());
-                return tagDao.findTags(map).get(0);
-            }).collect(Collectors.toList());
-            List<Tag> newTagsWithId = newTags.stream().map(l -> tagDao.addTag(l)).collect(Collectors.toList());
-            newTagsWithId.addAll(oldWithId);
-            newTagsWithId.forEach(tag -> tagDao.addTagToCertificate(tag, id));
+        Optional<Certificate> optionalCertificate = certificateDao.findById(id);
+        if (optionalCertificate.isEmpty()) {
+            throw new LogicException("WmessageCode2:" + id, "errorCode=1");
         }
-        return CertificateEntityToDtoConverter.convert(updatedCertificate);
+        Certificate certificateToUpdate = optionalCertificate.get();
+        updateFields(certificate, certificateToUpdate);
+        if (tags.size() != 0) {
+            updateTagsOfCertificate(tags, certificateToUpdate);
+        }
+        return CertificateEntityToDtoConverter.convert(certificateToUpdate);
     }
 
-    public List<Tag> getNewTagsToAdd(List<Tag> allTags) {
+    private void updateTagsOfCertificate(List<Tag> tags, Certificate certificateToUpdate) {
+        List<Tag> newTags = getNewTagsToAdd(tags);
+        List<Tag> oldWithId = tags.stream().map(tag -> tagDao.findByTagName(tag.getTagName())).collect(Collectors.toList());
+        List<Tag> newTagsWithId = newTags.stream().map(l -> tagDao.save(l)).collect(Collectors.toList());
+        newTagsWithId.addAll(oldWithId);
+        List<Integer> allIds = certificateToUpdate.getTags().stream().map(Tag::getTagId).collect(Collectors.toList());
+        for (Tag tag : newTagsWithId) {
+            if (allIds.contains(tag.getTagId())) {
+                throw new LogicException("WmessageCode12:" + tag.getTagName(), "errorCode=3");
+            }
+        }
+        certificateToUpdate.getTags().addAll(newTagsWithId);
+    }
+
+    private void updateFields(Certificate certificate, Certificate certificateToUpdate) {
+        String certificateName = certificate.getCertificateName();
+        String description = certificate.getDescription();
+        Integer price = certificate.getPrice();
+        Integer duration = certificate.getDuration();
+        if (certificateName != null) {
+            certificateToUpdate.setCertificateName(certificateName);
+        }
+        if (description != null) {
+            certificateToUpdate.setDescription(description);
+        }
+        if (price != null) {
+            certificateToUpdate.setPrice(price);
+        }
+        if (duration != null) {
+            certificateToUpdate.setDuration(duration);
+        }
+    }
+
+    private List<Tag> getNewTagsToAdd(List<Tag> allTags) {
         List<Tag> newTags = new ArrayList<>();
         ListIterator<Tag> iterator = allTags.listIterator();
         while (iterator.hasNext()) {
@@ -113,7 +150,7 @@ public class CertificateLogicImpl implements CertificateLogic {
             if (tag.getTagName() == null) {
                 throw new LogicException("messageCode13", "errorCode=3");
             }
-            boolean isTagExist = tagDao.isTagExist(tag);
+            boolean isTagExist = tagDao.existsByTagName(tag.getTagName());
             if (!isTagExist) {
                 newTags.add(tag);
                 iterator.remove();

@@ -1,14 +1,14 @@
 package com.epam.esm.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
 
 import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderDto extends RepresentationModel<OrderDto> {
     private Integer orderId;
     private UserDto userDto;

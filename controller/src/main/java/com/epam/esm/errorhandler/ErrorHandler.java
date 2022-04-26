@@ -1,7 +1,6 @@
 package com.epam.esm.errorhandler;
 
 
-import com.epam.esm.exception.DaoException;
 import com.epam.esm.exception.LogicException;
 import com.epam.esm.exception.RestControllerException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -58,12 +57,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<String> handleLogicException
             (LogicException logicException, HttpServletRequest request) {
         return handle(logicException, logicException.getErrorCode(), request);
-    }
-
-    @ExceptionHandler(DaoException.class)
-    public ResponseEntity<String> handleDaoException
-            (DaoException daoException, HttpServletRequest request) {
-        return handle(daoException, daoException.getErrorCode(), request);
     }
 
     public ResponseEntity<String> handle(Exception exception, String errorCode, HttpServletRequest request) {

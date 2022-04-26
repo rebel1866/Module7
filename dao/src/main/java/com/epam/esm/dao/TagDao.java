@@ -1,64 +1,27 @@
 package com.epam.esm.dao;
 
-import com.epam.esm.exception.DaoException;
 import com.epam.esm.entity.Tag;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 
-import java.util.List;
-import java.util.Map;
 
 /**
  * This interface contains logic for data access for tags
+ *
  * @author Stanislav Melnikov
  * @version 1.0
  */
-public interface TagDao {
-    /**
-     * Search for tags by multiple params
-     * @param params - map with params for search
-     * @return list of tags
-     */
-    List<Tag> findTags(Map<String, String> params) throws DaoException;
+public interface TagDao extends CrudRepository<Tag, Integer> {
 
-    /**
-     * Add tag in database
-     * @param tag to add
-     * @return new tag
-     * @throws DaoException if validation is failed
-     */
-    Tag addTag(Tag tag) throws DaoException;
+    boolean existsByTagName(String tagName);
 
-    /**
-     * Delete tag by id
-     * @param id of tag to delete
-     * @throws DaoException if id validation is failed
-     */
-    void deleteTag(int id) throws DaoException;
+    Tag findByTagName(String tagName);
 
-    /**
-     * Find tag by id
-     * @param id
-     * @return tag that is found
-     * @throws DaoException if id validation is failed
-     */
-    Tag findTagById(int id) throws DaoException;
-
-    /**
-     * Add tag to particular certificate
-     * @param tag that will be added
-     * @param certificateId - id of certificate that tag will be added to
-     */
-    void addTagToCertificate(Tag tag, int certificateId);
-
-    /**
-     * Get most popular tag of user with the highest cost of all orders
-     * @return tag object
-     */
-    Tag getMostPopularTag();
-
-    /**
-     * method checks whether tag is exist
-     * @param tag
-     * @return true if tag is exist
-     */
-    boolean isTagExist(Tag tag);
+    @Query(value = "select t.tag_id, t.tag_name, t.operation, t.operation_time from gift_certificates " +
+            "inner join cert_tags ct on gift_certificates.gift_certificate_id = ct.gift_certificate_id inner join tags " +
+            "t on ct.tag_id = t.tag_id inner join orders o on gift_certificates.gift_certificate_id = o.gift_certificate_id " +
+            "where user_id = (select  o.user_id from users inner join orders o on users.user_id = o.user_id " +
+            "group by user_name order by sum(final_price) desc limit 1) group by tag_name order by count(tag_name) desc " +
+            "limit 1", nativeQuery = true)
+    Tag findMostPopularTag();
 }
