@@ -22,4 +22,8 @@ public class SearchUserRequest {
     private String page;
     @Pattern(regexp = "^[1-9]+[0-9]*$", message = "rCode22")
     private String pageSize;
+    @Pattern(regexp = "userName|userSurname", message = "rCode4")
+    private String sorting;
+    @Pattern(regexp = "asc|desc", message = "rCode5")
+    private String sortingOrder;
 }

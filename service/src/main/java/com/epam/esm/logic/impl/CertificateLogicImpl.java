@@ -6,16 +6,22 @@ import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.SearchCertificateRequest;
 import com.epam.esm.dto.UpdateCertificateRequest;
 import com.epam.esm.entity.QCertificate;
+import com.epam.esm.entity.QTag;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.dao.CertificateDao;
 import com.epam.esm.entity.Certificate;
 import com.epam.esm.exception.LogicException;
 import com.epam.esm.logic.CertificateLogic;
+import com.epam.esm.utils.QPredicate;
+import com.epam.esm.utils.SortBuilder;
 import com.epam.esm.validation.Validation;
-import com.google.common.base.CaseFormat;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +29,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.epam.esm.entity.QCertificate.*;
 
 @Service
 public class CertificateLogicImpl implements CertificateLogic {
@@ -42,13 +50,17 @@ public class CertificateLogicImpl implements CertificateLogic {
         this.tagDao = tagDao;
     }
 
+
     @Override
     @Transactional
-    public List<CertificateDto> findCertificates(SearchCertificateRequest request) {
-        QCertificate certificate = QCertificate.certificate;
-        Predicate customerHasBirthday = certificate.certificateName.eq("GALLON");
-
-        List<Certificate> certificates = (List<Certificate>) certificateDao.findAll(customerHasBirthday);
+    public List<CertificateDto> findCertificates(SearchCertificateRequest request, int page, int pageSize) {  // page validation
+        Predicate predicate = buildPredicate(request);
+        Sort sort = SortBuilder.buildSort(request.getSorting(), request.getSortingOrder());
+        Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
+        List<Certificate> certificates = certificateDao.findAll(predicate, pageable).getContent();
+        if (certificates.size() == 0) {
+            throw new LogicException("messageCode1", "errorCode=1");
+        }
         return CertificateEntityToDtoConverter.convertList(certificates);
     }
 
@@ -157,5 +169,19 @@ public class CertificateLogicImpl implements CertificateLogic {
             }
         }
         return newTags;
+    }
+
+    private Predicate buildPredicate(SearchCertificateRequest request) {
+        Predicate certificatePredicate = QPredicate.builder().add(request.getCertificateName(), certificate.
+                certificateName::containsIgnoreCase).add(request.getPriceFrom(),
+                certificate.price::goe).add(request.getPriceTo(), certificate.price::loe).buildAnd();
+        if (request.getTagName() != null) {
+            List<String> tagNames = Arrays.stream(request.getTagName().split(";")).map(String::trim).collect(Collectors.toList());
+            List<Predicate> tagPredicatesList = tagNames.stream().map(tagName -> certificate.tags.any().tagName.eq(tagName)).
+                    collect(Collectors.toList());
+            Predicate tagsPredicate = ExpressionUtils.allOf(tagPredicatesList);
+            return ExpressionUtils.allOf(certificatePredicate, tagsPredicate);
+        }
+        return certificatePredicate;
     }
 }

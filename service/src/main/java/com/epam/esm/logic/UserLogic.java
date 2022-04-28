@@ -15,9 +15,11 @@ public interface UserLogic {
     /**
      * Method is used for searching users by multiple params
      * @param request - contains params for search
+     * @param page
+     * @param pageSize
      * @return list of users that are found
      */
-    List<UserDto> getUsers(SearchUserRequest request);
+    List<UserDto> getUsers(SearchUserRequest request, int page, int pageSize);
 
     /**
      * Search for user by id

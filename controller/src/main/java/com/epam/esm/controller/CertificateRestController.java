@@ -10,15 +10,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
 import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 /**
  * This class is used as controller for requests related to certificate objects
+ *
  * @author Stanislav Melnikov
  * @version 1.0
  */
@@ -31,14 +34,15 @@ public class CertificateRestController {
     public void setCertificateLogic(CertificateLogic certificateLogic) {
         this.certificateLogic = certificateLogic;
     }
-
+//binding result - refactor
     @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
-    public List<CertificateDto> getCertificates(@ModelAttribute @Valid SearchCertificateRequest searchRequest,
-                                                BindingResult bindingResult) {
+    public List<CertificateDto> getCertificates(@ModelAttribute @Valid SearchCertificateRequest searchRequest, BindingResult bindingResult, @RequestParam(value = "page",
+            defaultValue = "1", required = false)  int page, @RequestParam(value = "pageSize", defaultValue = "20",
+            required = false) int pageSize) {
         if (bindingResult.hasErrors()) {
             throw new RestControllerException("messageCode11", "errorCode=3", bindingResult);
         }
-        List<CertificateDto> certificateDtoList = certificateLogic.findCertificates(searchRequest);
+        List<CertificateDto> certificateDtoList = certificateLogic.findCertificates(searchRequest, page, pageSize);
         certificateDtoList.forEach(l -> createLinkFoTagsCertificates(l.getTags()));
         return certificateDtoList;
     }

@@ -23,6 +23,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * This class is used as controller for requests related to user objects
+ *
  * @author Stanislav Melnikov
  * @version 1.0
  */
@@ -37,11 +38,14 @@ public class UserRestController {
     }
 
     @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
-    public CollectionModel<UserDto> getUsers(@ModelAttribute @Valid SearchUserRequest request, BindingResult result) {
+    public CollectionModel<UserDto> getUsers
+            (@ModelAttribute @Valid SearchUserRequest request, BindingResult result, @RequestParam(value = "page",
+                    defaultValue = "1", required = false) int page, @RequestParam(value = "pageSize", defaultValue = "20",
+                    required = false) int pageSize) {
         if (result.hasErrors()) {
             throw new RestControllerException("messageCode11", "errorCode=3", result);
         }
-        List<UserDto> userDtoList = userLogic.getUsers(request);
+        List<UserDto> userDtoList = userLogic.getUsers(request, page, pageSize);
         userDtoList.forEach(this::createLinksForUser);
         Link self = linkTo(UserRestController.class).withSelfRel();
         return CollectionModel.of(userDtoList, self);
@@ -94,7 +98,7 @@ public class UserRestController {
     private void createLinksForUser(UserDto userDto) {
         Link self = linkTo(UserRestController.class).slash(userDto.getUserId()).withSelfRel();
         Link allOrdersLink = linkTo(methodOn(UserRestController.class).
-                getAllOrdersOfUser(userDto.getUserId(),1,20)).withRel("all orders of user");
+                getAllOrdersOfUser(userDto.getUserId(), 1, 20)).withRel("all orders of user");
         userDto.add(self, allOrdersLink);
     }
 }

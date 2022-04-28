@@ -16,10 +16,12 @@ public interface CertificateLogic {
     /**
      * Method is used for searching certificates by multiple params
      * @param request with parameters to search
+     * @param page
+     * @param pageSize
      * @return list of certificates, that've been found as a result of request
      * @throws LogicException, if validation is not passed
      */
-    List<CertificateDto> findCertificates(SearchCertificateRequest request) throws LogicException;
+    List<CertificateDto> findCertificates(SearchCertificateRequest request, int page, int pageSize) throws LogicException;
 
     /**
      * Method is used to save certificate in database

@@ -20,8 +20,4 @@ public class SearchTagRequest {
     private String sorting;
     @Pattern(regexp = "asc|desc", message = "rCode5")
     private String sortingOrder;
-    @Pattern(regexp = "^[1-9]+[0-9]*$", message = "rCode21")
-    private String page;
-    @Pattern(regexp = "^[1-9]+[0-9]*$", message = "rCode22")
-    private String pageSize;
 }

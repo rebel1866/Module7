@@ -2,7 +2,11 @@ package com.epam.esm.dao;
 
 import com.epam.esm.entity.Tag;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
+
+import java.util.List;
 
 
 /**
@@ -11,7 +15,7 @@ import org.springframework.data.repository.CrudRepository;
  * @author Stanislav Melnikov
  * @version 1.0
  */
-public interface TagDao extends CrudRepository<Tag, Integer> {
+public interface TagDao extends PagingAndSortingRepository<Tag, Integer>, QuerydslPredicateExecutor<Tag> {
 
     boolean existsByTagName(String tagName);
 

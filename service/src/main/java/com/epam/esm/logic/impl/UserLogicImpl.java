@@ -13,19 +13,21 @@ import com.epam.esm.entity.Order;
 import com.epam.esm.entity.User;
 import com.epam.esm.exception.LogicException;
 import com.epam.esm.logic.UserLogic;
+import com.epam.esm.utils.QPredicate;
+import com.epam.esm.utils.SortBuilder;
 import com.epam.esm.validation.Validation;
+import com.querydsl.core.types.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+
+import static com.epam.esm.entity.QUser.*;
 
 @Service
 public class UserLogicImpl implements UserLogic {
@@ -50,11 +52,12 @@ public class UserLogicImpl implements UserLogic {
     }
 
     @Override
-    public List<UserDto> getUsers(SearchUserRequest request) {
-//        Map<String, String> params = ObjectToMapConverter.convertToMap(request);
-//        List<User> users = userDao.getUsers(params);
-//        return UserEntityToDtoConverter.convertList(users);
-        return new ArrayList<>();
+    public List<UserDto> getUsers(SearchUserRequest request, int page, int pageSize) {
+        Predicate predicate = buildPredicate(request);
+        Sort sort = SortBuilder.buildSort(request.getSorting(), request.getSortingOrder());
+        Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
+        List<User> users = userDao.findAll(predicate, pageable).getContent();
+        return UserEntityToDtoConverter.convertList(users);
     }
 
     @Override
@@ -127,5 +130,11 @@ public class UserLogicImpl implements UserLogic {
         }
         Validation.validateId(userId);
         Validation.validateId(certificateIdStr);
+    }
+
+    private Predicate buildPredicate(SearchUserRequest request) {
+        return QPredicate.builder().add(request.getUserName(), user.userName::containsIgnoreCase).
+                add(request.getUserSurname(), user.userSurname::containsIgnoreCase).add(request.getLogin(),
+                        user.login::containsIgnoreCase).add(request.getEmail(), user.email::containsIgnoreCase).buildAnd();
     }
 }

@@ -15,9 +15,11 @@ public interface TagLogic {
     /**
      * Method is used for tag searching
      * @param request with params for search
+     * @param page
+     * @param pageSize
      * @return list of tags have been found
      */
-    List<TagDto> findTags(SearchTagRequest request) throws LogicException;
+    List<TagDto> findTags(SearchTagRequest request, int page, int pageSize) throws LogicException;
 
     /**
      * Method is used for adding tag in database

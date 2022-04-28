@@ -15,11 +15,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Constraint;
+import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.util.*;
 
 /**
  * This class handles all the exceptions that can be thrown while application is executed
+ *
  * @author Stanislav Melnikov
  * @version 1.0
  */
@@ -35,6 +38,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         CODES_AND_STATUSES.put("errorCode=2", HttpStatus.INTERNAL_SERVER_ERROR);
         CODES_AND_STATUSES.put("errorCode=3", HttpStatus.BAD_REQUEST);
     }
+
 
     @ExceptionHandler(RestControllerException.class)
     public ResponseEntity<String> handleControllerException(RestControllerException resException, HttpServletRequest request) {

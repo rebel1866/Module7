@@ -19,8 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
+
 /**
  * This class is used as controller for requests related to tag objects
+ *
  * @author Stanislav Melnikov
  * @version 1.0
  */
@@ -35,11 +37,13 @@ public class TagRestController {
     }
 
     @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
-    public CollectionModel<TagDto> getTags(@ModelAttribute @Valid SearchTagRequest request, BindingResult bindingResult) {
+    public CollectionModel<TagDto> getTags(@ModelAttribute @Valid SearchTagRequest request, BindingResult bindingResult,
+                                           @RequestParam(value = "page", defaultValue = "1", required = false) int page,
+                                           @RequestParam(value = "pageSize", defaultValue = "20", required = false) int pageSize) {
         if (bindingResult.hasErrors()) {
             throw new RestControllerException("messageCode11", "errorCode=3", bindingResult);
         }
-        List<TagDto> tagDtoList = tagLogic.findTags(request);
+        List<TagDto> tagDtoList = tagLogic.findTags(request, page, pageSize);
         tagDtoList.forEach(this::createLinkFoTagsCertificates);
         Link self = linkTo(TagRestController.class).withSelfRel();
         return CollectionModel.of(tagDtoList, self);

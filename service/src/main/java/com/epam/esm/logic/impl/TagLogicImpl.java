@@ -4,18 +4,22 @@ import com.epam.esm.dto.SearchTagRequest;
 import com.epam.esm.converter.TagEntityToDtoConverter;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.dao.TagDao;
+import com.epam.esm.entity.QTag;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.exception.LogicException;
 import com.epam.esm.logic.TagLogic;
-import com.epam.esm.converter.ObjectToMapConverter;
+import com.epam.esm.utils.SortBuilder;
 import com.epam.esm.validation.Validation;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -28,12 +32,21 @@ public class TagLogicImpl implements TagLogic {
     }
 
     @Override
-    public List<TagDto> findTags(SearchTagRequest request) {
-//        Map<String, String> params = ObjectToMapConverter.convertToMap(request);
-//        List<Tag> tags;
-//        tags = tagDao.findTags(params);
-//        return TagEntityToDtoConverter.convertList(tags);
-        return new ArrayList<>();
+    public List<TagDto> findTags(SearchTagRequest request, int page, int pageSize) {
+        List<Tag> tags;
+        Predicate predicate;
+        if (request.getTag() != null) {
+            predicate = QTag.tag.tagName.containsIgnoreCase(request.getTag());
+        } else {
+            predicate = new BooleanBuilder();
+        }
+        Sort sort = SortBuilder.buildSort(request.getSorting(), request.getSortingOrder());
+        Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
+        tags = tagDao.findAll(predicate, pageable).getContent();
+        if (tags.size() == 0) {
+            throw new LogicException("messageCode6", "errorCode=1");
+        }
+        return TagEntityToDtoConverter.convertList(tags);
     }
 
     @Override
