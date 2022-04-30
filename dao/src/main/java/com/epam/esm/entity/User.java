@@ -31,6 +31,12 @@ public class User implements Serializable {
     private String email;
     private String operation;
     private LocalDateTime operationTime;
+    @Enumerated(value = EnumType.STRING)
+    @Column(name = "role")
+    private Role role;
+    @Enumerated(value = EnumType.STRING)
+    @Column(name = "status")
+    private Status status;
 
     @PrePersist
     public void onPrePersist() {

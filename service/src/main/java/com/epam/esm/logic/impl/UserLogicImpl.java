@@ -114,6 +114,11 @@ public class UserLogicImpl implements UserLogic {
         return OrderEntityToDtoConverter.convert(order);
     }
 
+    @Override
+    public User findUserByLogin(String login) {
+        return userDao.findUserByLogin(login);
+    }
+
     private void checkOptionals(Optional<User> userOptional, Optional<Certificate> optionalCertificate,
                                 int userId, String certificateId) {
         if (userOptional.isEmpty()) {

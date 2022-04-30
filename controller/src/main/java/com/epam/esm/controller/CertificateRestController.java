@@ -9,12 +9,11 @@ import com.epam.esm.logic.CertificateLogic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Positive;
 import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -34,11 +33,12 @@ public class CertificateRestController {
     public void setCertificateLogic(CertificateLogic certificateLogic) {
         this.certificateLogic = certificateLogic;
     }
-//binding result - refactor
+
     @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
-    public List<CertificateDto> getCertificates(@ModelAttribute @Valid SearchCertificateRequest searchRequest, BindingResult bindingResult, @RequestParam(value = "page",
-            defaultValue = "1", required = false)  int page, @RequestParam(value = "pageSize", defaultValue = "20",
-            required = false) int pageSize) {
+    public List<CertificateDto> getCertificates
+            (@ModelAttribute @Valid SearchCertificateRequest searchRequest, BindingResult bindingResult,
+             @RequestParam(value = "page", defaultValue = "1", required = false)  int page, @RequestParam(value = "pageSize",
+                    defaultValue = "20", required = false) int pageSize) {
         if (bindingResult.hasErrors()) {
             throw new RestControllerException("messageCode11", "errorCode=3", bindingResult);
         }
@@ -56,6 +56,7 @@ public class CertificateRestController {
 
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('add_certificate')")
     public CertificateDto addCertificate(@RequestBody @Valid CertificateDto request,
                                          BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
@@ -68,12 +69,14 @@ public class CertificateRestController {
 
     @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('delete_certificate')")
     public void deleteCertificate(@PathVariable("id") int id) {
         certificateLogic.deleteCertificate(id);
     }
 
     @PutMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('update_certificate')")
     public CertificateDto updateCertificate(@PathVariable("id") int id, @RequestBody @Valid UpdateCertificateRequest
             request, BindingResult result) {
         if (result.hasErrors()) {

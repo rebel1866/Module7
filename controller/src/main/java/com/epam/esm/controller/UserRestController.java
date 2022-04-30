@@ -10,6 +10,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +39,7 @@ public class UserRestController {
     }
 
     @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
+    @PreAuthorize("hasAuthority('read_users')")
     public CollectionModel<UserDto> getUsers
             (@ModelAttribute @Valid SearchUserRequest request, BindingResult result, @RequestParam(value = "page",
                     defaultValue = "1", required = false) int page, @RequestParam(value = "pageSize", defaultValue = "20",
@@ -52,6 +54,7 @@ public class UserRestController {
     }
 
     @GetMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
+    @PreAuthorize("hasAuthority('read_user_by_id')")
     public UserDto getUserById(@PathVariable("id") int id) {
         UserDto userDto = userLogic.getUserById(id);
         createLinksForUser(userDto);
@@ -60,6 +63,7 @@ public class UserRestController {
 
     @PostMapping(value = "/{userId}/orders", consumes = {"application/json"}, produces = {"application/json"})
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('add_order')")
     public EntityModel<OrderDto> addOrderForUser(@PathVariable("userId") int userId, @RequestBody Map<String, String> params) {
         OrderDto orderDto = userLogic.addOrderToUser(userId, params);
         createLinksForOrder(orderDto);
@@ -69,6 +73,7 @@ public class UserRestController {
     }
 
     @GetMapping(value = "/{userId}/orders", consumes = {"application/json"}, produces = {"application/json"})
+    @PreAuthorize("hasAuthority('get_all_user_orders')")
     public CollectionModel<OrderDto> getAllOrdersOfUser(@PathVariable("userId") int userId, @RequestParam(value = "page",
             defaultValue = "1", required = false) int page, @RequestParam(value = "pageSize", defaultValue = "20",
             required = false) int pageSize) {
@@ -80,6 +85,7 @@ public class UserRestController {
     }
 
     @GetMapping(value = "/{userId}/orders/{orderId}", consumes = {"application/json"}, produces = {"application/json"})
+    @PreAuthorize("hasAuthority('get_order_by_id')")
     public OrderDto getOrderOfUser(@PathVariable("orderId") int orderId, @PathVariable("userId") int userId) {
         OrderDto orderDto = userLogic.getOrderOfUser(orderId, userId);
         createLinksForOrder(orderDto);

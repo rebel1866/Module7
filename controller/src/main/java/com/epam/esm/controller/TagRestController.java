@@ -13,6 +13,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +38,7 @@ public class TagRestController {
     }
 
     @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
+    @PreAuthorize("hasAuthority('read_tags')")
     public CollectionModel<TagDto> getTags(@ModelAttribute @Valid SearchTagRequest request, BindingResult bindingResult,
                                            @RequestParam(value = "page", defaultValue = "1", required = false) int page,
                                            @RequestParam(value = "pageSize", defaultValue = "20", required = false) int pageSize) {
@@ -50,6 +52,7 @@ public class TagRestController {
     }
 
     @GetMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
+    @PreAuthorize("hasAuthority('read_tag_by_id')")
     public TagDto getTagById(@PathVariable("id") int id) {
         TagDto tagDto = tagLogic.findTagById(id);
         createLinkFoTagsCertificates(tagDto);
@@ -58,7 +61,8 @@ public class TagRestController {
 
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
     @ResponseStatus(HttpStatus.CREATED)
-    public EntityModel<TagDto> addCertificate(@RequestBody Map<String, String> param) {
+    @PreAuthorize("hasAuthority('add_tag')")
+    public EntityModel<TagDto> addTag(@RequestBody Map<String, String> param) {
         TagDto tagDto = tagLogic.addTag(param.get("tagName"));
         Link self = linkTo(TagRestController.class).withSelfRel();
         Link selfTag = linkTo(TagRestController.class).slash(tagDto.getTagId()).withRel("added tag");
@@ -68,11 +72,13 @@ public class TagRestController {
 
     @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('delete_tag')")
     public void deleteTag(@PathVariable("id") int id) {
         tagLogic.deleteTag(id);
     }
 
     @GetMapping(value = "/mostPopular", consumes = {"application/json"}, produces = {"application/json"})
+    @PreAuthorize("hasAuthority('most_popular_tag')")
     public EntityModel<TagDto> getMostPopularTagOfUserHighestCostAllOrders() {
         TagDto tagDto = tagLogic.getMostPopularTag();
         Link self = linkTo(methodOn(TagRestController.class).

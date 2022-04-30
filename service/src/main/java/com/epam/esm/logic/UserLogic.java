@@ -3,6 +3,7 @@ package com.epam.esm.logic;
 import com.epam.esm.dto.OrderDto;
 import com.epam.esm.dto.SearchUserRequest;
 import com.epam.esm.dto.UserDto;
+import com.epam.esm.entity.User;
 
 import java.util.List;
 /**
@@ -11,10 +12,12 @@ import java.util.List;
  * @version 1.0
  */
 import java.util.Map;
+
 public interface UserLogic {
     /**
      * Method is used for searching users by multiple params
-     * @param request - contains params for search
+     *
+     * @param request  - contains params for search
      * @param page
      * @param pageSize
      * @return list of users that are found
@@ -23,6 +26,7 @@ public interface UserLogic {
 
     /**
      * Search for user by id
+     *
      * @param id of user for searching
      * @return user object, if found
      */
@@ -31,6 +35,7 @@ public interface UserLogic {
 
     /**
      * Method adds new order to user (user must already exist)
+     *
      * @param userId - user id that exist in database
      * @param params - info for new order
      * @return new order
@@ -39,6 +44,7 @@ public interface UserLogic {
 
     /**
      * Method is used for getting all orders of user
+     *
      * @param userId
      * @param page
      * @param pageSize
@@ -48,9 +54,12 @@ public interface UserLogic {
 
     /**
      * Get particular order of user
+     *
      * @param orderId
      * @param userId
      * @return order of user that match given params
      */
     OrderDto getOrderOfUser(int orderId, int userId);
+
+    User findUserByLogin(String login);
 }

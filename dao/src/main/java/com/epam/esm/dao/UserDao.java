@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This interface contains logic for data access for users
@@ -16,5 +17,5 @@ import java.util.Map;
  * @version 1.0
  */
 public interface UserDao extends CrudRepository<User, Integer>, QuerydslPredicateExecutor<User> {
-
+    User findUserByLogin(String login);
 }
