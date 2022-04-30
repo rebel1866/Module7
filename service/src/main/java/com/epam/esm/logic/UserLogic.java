@@ -62,4 +62,6 @@ public interface UserLogic {
     OrderDto getOrderOfUser(int orderId, int userId);
 
     User findUserByLogin(String login);
+
+    UserDto signUp(UserDto userDto);
 }

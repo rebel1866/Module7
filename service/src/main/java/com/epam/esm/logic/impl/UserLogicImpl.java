@@ -1,6 +1,7 @@
 package com.epam.esm.logic.impl;
 
 import com.epam.esm.converter.OrderEntityToDtoConverter;
+import com.epam.esm.converter.UserDtoToEntityConverter;
 import com.epam.esm.converter.UserEntityToDtoConverter;
 import com.epam.esm.dao.CertificateDao;
 import com.epam.esm.dao.OrderDao;
@@ -8,9 +9,7 @@ import com.epam.esm.dao.UserDao;
 import com.epam.esm.dto.OrderDto;
 import com.epam.esm.dto.SearchUserRequest;
 import com.epam.esm.dto.UserDto;
-import com.epam.esm.entity.Certificate;
-import com.epam.esm.entity.Order;
-import com.epam.esm.entity.User;
+import com.epam.esm.entity.*;
 import com.epam.esm.exception.LogicException;
 import com.epam.esm.logic.UserLogic;
 import com.epam.esm.utils.QPredicate;
@@ -21,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +35,7 @@ public class UserLogicImpl implements UserLogic {
     private UserDao userDao;
     private CertificateDao certificateDao;
     private OrderDao orderDao;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
 
     @Autowired
     public void setUserDao(UserDao userDao) {
@@ -92,7 +93,7 @@ public class UserLogicImpl implements UserLogic {
     @Override
     public List<OrderDto> getAllOrdersOfUser(int userId, int page, int pageSize) {
         Validation.validateId(userId);
-        Validation.validatePage(page);//try to do via validator
+        Validation.validatePage(page);
         Validation.validatePageSize(pageSize);
         Pageable pageable = PageRequest.of(page - 1, pageSize);
         List<Order> orders = orderDao.findOrdersByUserUserId(userId, pageable).getContent();
@@ -117,6 +118,21 @@ public class UserLogicImpl implements UserLogic {
     @Override
     public User findUserByLogin(String login) {
         return userDao.findUserByLogin(login);
+    }
+
+    @Override
+    public UserDto signUp(UserDto userDto) {
+        User user = UserDtoToEntityConverter.convert(userDto);
+        boolean isLoginExists = userDao.existsByLogin(userDto.getLogin());
+        if (isLoginExists) {
+            throw new LogicException("messageCode35", "errorCode=3");
+        }
+        String password = bCryptPasswordEncoder.encode(userDto.getPassword());
+        user.setRole(Role.USER);
+        user.setStatus(Status.ACTIVE);
+        user.setPassword(password);
+        User added = userDao.save(user);
+        return UserEntityToDtoConverter.convert(added);
     }
 
     private void checkOptionals(Optional<User> userOptional, Optional<Certificate> optionalCertificate,

@@ -18,4 +18,6 @@ import java.util.Optional;
  */
 public interface UserDao extends CrudRepository<User, Integer>, QuerydslPredicateExecutor<User> {
     User findUserByLogin(String login);
+
+    boolean existsByLogin(String login);
 }

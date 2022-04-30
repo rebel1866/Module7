@@ -1,8 +1,9 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.dao.UserDao;
 import com.epam.esm.dto.AuthenticationRequestDto;
+import com.epam.esm.dto.UserDto;
 import com.epam.esm.entity.User;
+import com.epam.esm.exception.RestControllerException;
 import com.epam.esm.logic.UserLogic;
 import com.epam.esm.security.provider.JwtTokenProvider;
 import org.springframework.http.HttpStatus;
@@ -11,11 +12,11 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,9 +53,13 @@ public class AuthenticationRestController {
         }
     }
 
-    @GetMapping("/logout")
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
-        SecurityContextLogoutHandler securityContextLogoutHandler = new SecurityContextLogoutHandler();
-        securityContextLogoutHandler.logout(request, response, null);
+    @PostMapping(value = "/signup", consumes = {"application/json"}, produces = {"application/json"})
+    public ResponseEntity<String> signup(@RequestBody @Valid UserDto userDto, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throw new RestControllerException("messageCode11", "errorCode=3", bindingResult);
+        }
+        UserDto addedUser = userLogic.signUp(userDto);
+        String responseMessage = "Welcome " + addedUser.getUserName() + " " + addedUser.getUserSurname() + " !";
+        return new ResponseEntity<>(responseMessage, HttpStatus.CREATED);
     }
 }
