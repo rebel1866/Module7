@@ -55,6 +55,8 @@ public class UserLogicImpl implements UserLogic {
     @Override
     public List<UserDto> getUsers(SearchUserRequest request, int page, int pageSize) {
         Predicate predicate = buildPredicate(request);
+        Validation.validatePageSize(pageSize);
+        Validation.validatePage(page);
         Sort sort = SortBuilder.buildSort(request.getSorting(), request.getSortingOrder());
         Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
         List<User> users = userDao.findAll(predicate, pageable).getContent();

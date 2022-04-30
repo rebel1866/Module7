@@ -40,6 +40,8 @@ public class TagLogicImpl implements TagLogic {
         } else {
             predicate = new BooleanBuilder();
         }
+        Validation.validatePage(page);
+        Validation.validatePageSize(pageSize);
         Sort sort = SortBuilder.buildSort(request.getSorting(), request.getSortingOrder());
         Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
         tags = tagDao.findAll(predicate, pageable).getContent();
