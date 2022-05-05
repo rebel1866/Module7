@@ -3,7 +3,6 @@ package com.epam.esm.errorhandler;
 
 import com.epam.esm.exception.LogicException;
 import com.epam.esm.exception.RestControllerException;
-import com.epam.esm.security.exception.JwtAuthenticationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpHeaders;

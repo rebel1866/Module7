@@ -1,7 +1,7 @@
 package com.epam.esm.security.config;
 
-import com.epam.esm.security.CustomAccessDeniedHandler;
-import com.epam.esm.security.CustomAuthenticationEntryPoint;
+import com.epam.esm.security.accessdeniedhandler.CustomAccessDeniedHandler;
+import com.epam.esm.security.authentrypoint.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

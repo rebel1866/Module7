@@ -1,10 +1,9 @@
 package com.epam.esm.security.provider;
 
-import com.epam.esm.security.exception.JwtAuthenticationException;
+
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,6 +26,7 @@ public class JwtTokenProvider {
     private String authorizationHeader;
     @Value("${jwt.expiration}")
     private long validityInMilliseconds;
+    private static final String bearer = "Bearer ";
 
     public JwtTokenProvider(@Qualifier("userDetailsServiceImpl") UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -70,6 +70,10 @@ public class JwtTokenProvider {
     }
 
     public String resolveToken(HttpServletRequest request) {
-        return request.getHeader(authorizationHeader);
+        String authHeader = request.getHeader(authorizationHeader);
+        if (authHeader != null && authHeader.contains(bearer)) {
+            return authHeader.substring(bearer.length());
+        }
+        return authHeader;
     }
 }
