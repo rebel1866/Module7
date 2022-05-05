@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -62,6 +64,24 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<String> handleLogicException
             (LogicException logicException, HttpServletRequest request) {
         return handle(logicException, logicException.getErrorCode(), request);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<String> handleAuthException
+            (AuthenticationException authenticationException, HttpServletRequest request) throws JsonProcessingException {
+        ErrorMessage errorMessage = new ErrorMessage("Access token is expired or invalid", "errorCode=3",
+                HttpStatus.BAD_REQUEST, "INCORRECT TOKEN");
+        defaultResponse = getDefResponse(errorMessage);
+        return new ResponseEntity<>(defaultResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> handleAccessDeniedException
+            (AccessDeniedException accessDeniedException, HttpServletRequest request) throws JsonProcessingException {
+        ErrorMessage errorMessage = new ErrorMessage("Access denied", "errorCode=3",
+                HttpStatus.FORBIDDEN, "No access allowed");
+        defaultResponse = getDefResponse(errorMessage);
+        return new ResponseEntity<>(defaultResponse, HttpStatus.FORBIDDEN);
     }
 
     public ResponseEntity<String> handle(Exception exception, String errorCode, HttpServletRequest request) {
@@ -129,7 +149,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
 
-  public  static class ErrorMessage {
+    public static class ErrorMessage {
         private String errorMessage;
         private String errorCode;
         private HttpStatus httpStatus;
