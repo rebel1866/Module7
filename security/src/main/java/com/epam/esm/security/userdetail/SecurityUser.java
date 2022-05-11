@@ -7,16 +7,22 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class SecurityUser implements UserDetails {
-
+    private final int id;
     private final String username;
     private final String password;
     private final List<SimpleGrantedAuthority> authorities;
     private final boolean isActive;
 
-    public SecurityUser(String username, String password, List<SimpleGrantedAuthority> authorities, boolean isActive) {
+    public int getId() {
+        return id;
+    }
+
+    public SecurityUser(int id, String username, String password, List<SimpleGrantedAuthority> authorities, boolean isActive) {
+        this.id = id;
         this.username = username;
         this.password = password;
         this.authorities = authorities;
@@ -27,6 +33,7 @@ public class SecurityUser implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
     }
+
 
     @Override
     public String getPassword() {

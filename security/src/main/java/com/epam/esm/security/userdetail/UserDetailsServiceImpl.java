@@ -24,7 +24,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
         User user = userDao.findUserByLogin(login).orElseThrow(() -> new UsernameNotFoundException("User doesn't exists"));
-        return new SecurityUser(user.getEmail(), user.getPassword(), new ArrayList<>(user.getRole().getAuthorities()),
+        return new SecurityUser(user.getUserId(), user.getEmail(), user.getPassword(), new ArrayList<>(user.getRole().getAuthorities()),
                 user.getStatus().equals(Status.ACTIVE));
     }
 }

@@ -63,7 +63,7 @@ public class UserRestController {
 
     @PostMapping(value = "/{userId}/orders", consumes = {"application/json"}, produces = {"application/json"})
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("#userId == principal.username && hasAuthority('add_order')")
+    @PreAuthorize("#userId == principal.id && hasAuthority('add_order')")
     public EntityModel<OrderDto> addOrderForUser(@PathVariable("userId") int userId, @RequestBody Map<String, String> params) {
         OrderDto orderDto = userLogic.addOrderToUser(userId, params);
         createLinksForOrder(orderDto);
