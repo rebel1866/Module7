@@ -1,7 +1,5 @@
 package com.epam.esm.security.userdetail;
 
-import com.epam.esm.entity.Status;
-import com.epam.esm.entity.User;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

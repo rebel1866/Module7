@@ -6,12 +6,14 @@ import com.epam.esm.converter.UserEntityToDtoConverter;
 import com.epam.esm.dao.CertificateDao;
 import com.epam.esm.dao.OrderDao;
 import com.epam.esm.dao.UserDao;
+import com.epam.esm.dto.AuthenticationRequestDto;
 import com.epam.esm.dto.OrderDto;
 import com.epam.esm.dto.SearchUserRequest;
 import com.epam.esm.dto.UserDto;
 import com.epam.esm.entity.*;
 import com.epam.esm.exception.LogicException;
 import com.epam.esm.logic.UserLogic;
+import com.epam.esm.security.provider.JwtTokenProvider;
 import com.epam.esm.utils.QPredicate;
 import com.epam.esm.utils.SortBuilder;
 import com.epam.esm.validation.Validation;
@@ -20,6 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +40,8 @@ public class UserLogicImpl implements UserLogic {
     private UserDao userDao;
     private CertificateDao certificateDao;
     private OrderDao orderDao;
+    private AuthenticationManager authenticationManager;
+    private JwtTokenProvider jwtTokenProvider;
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
 
     @Autowired
@@ -50,6 +57,16 @@ public class UserLogicImpl implements UserLogic {
     @Autowired
     public void setOrderDao(OrderDao orderDao) {
         this.orderDao = orderDao;
+    }
+
+    @Autowired
+    public void setAuthenticationManager(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+    }
+
+    @Autowired
+    public void setJwtTokenProvider(JwtTokenProvider jwtTokenProvider) {
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
@@ -118,11 +135,6 @@ public class UserLogicImpl implements UserLogic {
     }
 
     @Override
-    public User findUserByLogin(String login) {
-        return userDao.findUserByLogin(login);
-    }
-
-    @Override
     public UserDto signUp(UserDto userDto) {
         User user = UserDtoToEntityConverter.convert(userDto);
         boolean isLoginExists = userDao.existsByLogin(userDto.getLogin());
@@ -137,14 +149,15 @@ public class UserLogicImpl implements UserLogic {
         return UserEntityToDtoConverter.convert(added);
     }
 
-    private void checkOptionals(Optional<User> userOptional, Optional<Certificate> optionalCertificate,
-                                int userId, String certificateId) {
-        if (userOptional.isEmpty()) {
-            throw new LogicException("WmessageCode28:" + userId, "errorCode=1");
-        }
-        if (optionalCertificate.isEmpty()) {
-            throw new LogicException("WmessageCode2:" + certificateId, "errorCode=1");
-        }
+    @Override
+    public Map<String, String> authenticate(AuthenticationRequestDto request) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getLogin(), request.getPassword()));
+        User user = userDao.findUserByLogin(request.getLogin()).orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
+        String token = jwtTokenProvider.createToken(request.getLogin(), user.getRole().name());
+        Map<String, String> response = new HashMap<>();
+        response.put("login", request.getLogin());
+        response.put("token", token);
+        return response;
     }
 
     private void validateIds(String certificateIdStr, int userId) {
@@ -153,6 +166,16 @@ public class UserLogicImpl implements UserLogic {
         }
         Validation.validateId(userId);
         Validation.validateId(certificateIdStr);
+    }
+
+    private void checkOptionals(Optional<User> userOptional, Optional<Certificate> optionalCertificate,
+                                int userId, String certificateId) {
+        if (userOptional.isEmpty()) {
+            throw new LogicException("WmessageCode28:" + userId, "errorCode=1");
+        }
+        if (optionalCertificate.isEmpty()) {
+            throw new LogicException("WmessageCode2:" + certificateId, "errorCode=1");
+        }
     }
 
     private Predicate buildPredicate(SearchUserRequest request) {

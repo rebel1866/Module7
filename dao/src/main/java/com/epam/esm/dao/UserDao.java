@@ -1,13 +1,9 @@
 package com.epam.esm.dao;
 
-import com.epam.esm.entity.Order;
 import com.epam.esm.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.CrudRepository;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -17,7 +13,7 @@ import java.util.Optional;
  * @version 1.0
  */
 public interface UserDao extends CrudRepository<User, Integer>, QuerydslPredicateExecutor<User> {
-    User findUserByLogin(String login);
+    Optional<User> findUserByLogin(String login);
 
     boolean existsByLogin(String login);
 }

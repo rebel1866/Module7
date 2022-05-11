@@ -66,17 +66,15 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<String> handleAuthException
-            (AuthenticationException authenticationException, HttpServletRequest request) throws JsonProcessingException {
-        ErrorMessage errorMessage = new ErrorMessage("Access token is expired or invalid", "errorCode=3",
-                HttpStatus.BAD_REQUEST, "INCORRECT TOKEN");
+    public ResponseEntity<String> handleAuthException() throws JsonProcessingException {
+        ErrorMessage errorMessage = new ErrorMessage("Authentication failure", "errorCode=3",
+                HttpStatus.BAD_REQUEST, "Wrong login/password combination or incorrect token");
         defaultResponse = getDefResponse(errorMessage);
         return new ResponseEntity<>(defaultResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<String> handleAccessDeniedException
-            (AccessDeniedException accessDeniedException, HttpServletRequest request) throws JsonProcessingException {
+    public ResponseEntity<String> handleAccessDeniedException() throws JsonProcessingException {
         ErrorMessage errorMessage = new ErrorMessage("Access denied", "errorCode=3",
                 HttpStatus.FORBIDDEN, "No access allowed");
         defaultResponse = getDefResponse(errorMessage);

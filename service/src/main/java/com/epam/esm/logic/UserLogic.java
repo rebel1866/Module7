@@ -1,9 +1,9 @@
 package com.epam.esm.logic;
 
+import com.epam.esm.dto.AuthenticationRequestDto;
 import com.epam.esm.dto.OrderDto;
 import com.epam.esm.dto.SearchUserRequest;
 import com.epam.esm.dto.UserDto;
-import com.epam.esm.entity.User;
 
 import java.util.List;
 /**
@@ -61,7 +61,8 @@ public interface UserLogic {
      */
     OrderDto getOrderOfUser(int orderId, int userId);
 
-    User findUserByLogin(String login);
 
     UserDto signUp(UserDto userDto);
+
+    Map<String, String> authenticate(AuthenticationRequestDto authenticationRequestDto);
 }
