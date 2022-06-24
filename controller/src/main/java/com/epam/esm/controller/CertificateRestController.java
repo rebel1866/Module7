@@ -1,5 +1,6 @@
 package com.epam.esm.controller;
 
+
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.RestControllerException;
@@ -26,6 +27,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
  */
 @RestController
 @RequestMapping(value = "/certificates")
+@CrossOrigin("http://localhost:3000")
 public class CertificateRestController {
     private CertificateLogic certificateLogic;
 
